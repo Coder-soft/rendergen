@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragon API Resources</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #2a143d;
+            background-image: 
+                linear-gradient(rgba(106, 65, 165, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(106, 65, 165, 0.3) 1px, transparent 1px);
+            background-size: 20px 20px;
+            font-family: 'Press Start 2P', cursive;
+            color: #e0d8f0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border: 4px solid #6a41a5;
+            border-radius: 8px;
+        }
+
+        h1 {
+            color: #9d6bf0;
+            text-align: center;
+            text-shadow: 3px 3px 0 #4a2b6b;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            margin: 25px 0;
+            padding: 15px;
+            background-color: rgba(74, 43, 107, 0.3);
+            border-left: 5px solid #9d6bf0;
+        }
+
+        .file-list a {
+            display: block;
+            color: #6ba5f0;
+            padding: 8px 0;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .file-list a:hover {
+            color: #9d6bf0;
+            text-decoration: underline;
+        }
+
+        h2 {
+            color: #6ba5f0;
+            margin-bottom: 15px;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            color: #9d6bf0;
+            text-decoration: none;
+            padding: 5px 10px;
+            border: 2px solid #6a41a5;
+        }
+
+        .nav a:hover {
+            background-color: #6a41a5;
+        }
+
+        .loading {
+            color: #6a41a5;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RENDER DRAGON API RESOURCES</h1>
+        
+        <div class="nav">
+            <a href="#animations">Animations</a>
+            <a href="#fonts">Fonts</a>
+            <a href="#music">Music</a>
+            <a href="#sfx">SFX</a>
+        </div>
+
+        <!-- Sections with loading states -->
+        <div class="section" id="animations">
+            <h2>🎮 Animations</h2>
+            <div class="file-list loading">Loading dragon animations...</div>
+        </div>
+
+        <div class="section" id="fonts">
+            <h2>🔤 Fonts</h2>
+            <div class="file-list loading">Loading ancient fonts...</div>
+        </div>
+
+        <div class="section" id="music">
+            <h2>🎵 Music</h2>
+            <div class="file-list loading">Loading epic scores...</div>
+        </div>
+
+        <div class="section" id="sfx">
+            <h2>💥 Sound Effects</h2>
+            <div class="file-list loading">Loading powerful sounds...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = 'API';
+        const SECTIONS = {
+            animations: { endpoint: 'animations/index.json', element: '#animations' },
+            fonts: { endpoint: 'fonts/index.json', element: '#fonts' },
+            music: { endpoint: 'music/index.json', element: '#music' },
+            sfx: { endpoint: 'sfx/index.json', element: '#sfx' }
+        };
+
+        // Main loading function
+        async function loadResources() {
+            try {
+                for (const [sectionId, config] of Object.entries(SECTIONS)) {
+                    const response = await fetch(`${API_BASE}/${config.endpoint}`);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    
+                    const data = await response.json();
+                    renderFiles(sectionId, data.files);
+                }
+            } catch (error) {
+                console.error('Dragon magic failed:', error);
+                showError();
+            }
+        }
+
+        // Render files to DOM
+        function renderFiles(sectionId, files) {
+            const container = document.querySelector(`${SECTIONS[sectionId].element} .file-list`);
+            container.classList.remove('loading');
+            
+            if (files.length === 0) {
+                container.innerHTML = '<p>No ancient knowledge found here...</p>';
+                return;
+            }
+
+            container.innerHTML = files.map(file => `
+                <a href="${API_BASE}/${sectionId}/${encodeURIComponent(file)}" target="_blank">
+                    ${file}
+                </a>
+            `).join('');
+        }
+
+        // Error handling
+        function showError() {
+            document.querySelectorAll('.file-list').forEach(container => {
+                container.innerHTML = '<p>⚠️ Failed to summon dragon files!</p>';
+            });
+        }
+
+        // Start loading when ready
+        document.addEventListener('DOMContentLoaded', loadResources);
+    </script>
+</body>
+</html>
