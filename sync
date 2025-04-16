@@ -1,0 +1,91 @@
+import os
+import shutil
+import tempfile
+import urllib.request
+import zipfile
+
+def sync_folders(source_dir, dest_dir):
+    # Create sets to track source files and directories
+    source_files = set()
+    source_dirs = set()
+
+    # Walk through source directory
+    for root, dirs, files in os.walk(source_dir):
+        for dir_name in dirs:
+            rel_path = os.path.relpath(os.path.join(root, dir_name), source_dir)
+            source_dirs.add(rel_path)
+        for file_name in files:
+            rel_path = os.path.relpath(os.path.join(root, file_name), source_dir)
+            source_files.add(rel_path)
+
+    # Ensure destination exists
+    os.makedirs(dest_dir, exist_ok=True)
+
+    # Copy/update files and directories
+    for root, dirs, files in os.walk(source_dir):
+        for dir_name in dirs:
+            src_dir = os.path.join(root, dir_name)
+            rel_dir = os.path.relpath(src_dir, source_dir)
+            dest_path = os.path.join(dest_dir, rel_dir)
+            os.makedirs(dest_path, exist_ok=True)
+
+        for file_name in files:
+            src_file = os.path.join(root, file_name)
+            rel_file = os.path.relpath(src_file, source_dir)
+            dest_file = os.path.join(dest_dir, rel_file)
+
+            if not os.path.exists(dest_file) or \
+               os.stat(src_file).st_mtime - os.stat(dest_file).st_mtime > 1:
+                shutil.copy2(src_file, dest_file)
+                print(f"Updated: {rel_file}")
+
+    # Remove files/directories not present in source
+    for root, dirs, files in os.walk(dest_dir, topdown=False):
+        for file_name in files:
+            dest_file = os.path.join(root, file_name)
+            rel_file = os.path.relpath(dest_file, dest_dir)
+            if rel_file not in source_files:
+                os.remove(dest_file)
+                print(f"Removed file: {rel_file}")
+
+        for dir_name in dirs:
+            dest_dir_path = os.path.join(root, dir_name)
+            rel_dir = os.path.relpath(dest_dir_path, dest_dir)
+            if rel_dir not in source_dirs:
+                shutil.rmtree(dest_dir_path)
+                print(f"Removed directory: {rel_dir}")
+
+def main():
+    # Configuration
+    repo_url = "https://github.com/Yxmura/resources_renderdragon/archive/refs/heads/main.zip"
+    dest_dir = r"F:\RenderDragon\rendergen\rendergen\API"
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        try:
+            # Download repository
+            zip_path = os.path.join(tmp_dir, "repo.zip")
+            print("Downloading repository...")
+            with urllib.request.urlopen(repo_url) as response:
+                with open(zip_path, 'wb') as f:
+                    f.write(response.read())
+
+            # Extract repository
+            print("Extracting files...")
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(tmp_dir)
+
+            # Get extracted folder path
+            extracted_folder = os.path.join(tmp_dir, "resources_renderdragon-main")
+
+            # Synchronize files
+            print("Synchronizing files...")
+            sync_folders(extracted_folder, dest_dir)
+
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            return
+
+    print("Synchronization completed successfully!")
+
+if __name__ == "__main__":
+    main()
